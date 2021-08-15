@@ -8,7 +8,7 @@ from ranks import Rank
 from playlists import Playlist
 from mock_players import mock_players
 from exceptions import EmptyRankException
-from helpers import clear_channel, get_rank_banner_file
+import helpers 
 
 channel_names = {
     Playlist.ONES: ONES_CHANNEL,
@@ -26,14 +26,17 @@ class Leaderboard:
     player_occupied_ranks: list
     leaderboard_messages: dict
 
-    def __init__(self, client: discord.Client, playlist: Playlist):
+    def __init__(self, client: discord.Client, playlist: Playlist, channel: discord.TextChannel = None):
         self.playlist = playlist
         self.client = client
 
         self.players = mock_players
 
-        guild = discord.utils.get(client.guilds, name=GUILD)
-        self.channel = discord.utils.get(guild.channels, name=channel_names[playlist])
+        if channel != None:
+            self.channel = channel
+        else:
+            guild = discord.utils.get(client.guilds, name=GUILD)
+            self.channel = discord.utils.get(guild.channels, name=channel_names[playlist])
         self.player_occupied_ranks = []
         self.leaderboard_messages = {}
 
@@ -52,9 +55,10 @@ class Leaderboard:
             for rank, message in self.leaderboard_messages.items():
                 await message.edit(content=self.get_message(rank))
 
-    async def send(self):
+    async def send(self, clear_channel=True):
         self.leaderboard_messages = {}
-        await clear_channel(self.channel, self.client)
+        if clear_channel:
+            await helpers.clear_channel(self.channel, self.client)
         await self.channel.send(f'*{self.playlist.name.capitalize()} Leaderboard*')
         for rank in Rank:
             try:
@@ -68,7 +72,7 @@ class Leaderboard:
 
     async def send_for_rank(self, rank: Rank) -> discord.Message:
         message = self.get_message(rank)
-        await self.channel.send(file=get_rank_banner_file(rank))
+        await self.channel.send(file=helpers.get_rank_banner_file(rank))
         return await self.channel.send(message)
 
     def get_message(self, rank: Rank) -> str:
