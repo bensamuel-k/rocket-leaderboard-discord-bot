@@ -7,28 +7,47 @@ from config import ONES_CHANNEL, TWOS_CHANNEL, THREES_CHANNEL, MIN_RANK
 from ranks import Rank
 from playlists import Playlist
 from mock_players import mock_players
+from exceptions import EmptyRankException
+from helpers import clear_channel
 
-async def update_leaderboard(leaderboard_messages: dict, playlist: Playlist):
-    for rank, message in leaderboard_messages.items():
-        await message.edit(content=get_leaderboard_message(rank, playlist))
+non_empty_ranks = []
 
-async def send_leaderboard(playlist: Playlist, guild: discord.Guild) -> dict:
+async def update_leaderboard(leaderboard_messages: dict, playlist: Playlist, guild: discord.Guild, client: str):
+    update_non_empty_ranks(playlist)
+    ranks_in_discord = list(leaderboard_messages.keys())
+    non_empty_ranks.sort(key=lambda rank: rank.value)
+    ranks_in_discord.sort(key=lambda rank: rank.value)
+    should_resend = non_empty_ranks != ranks_in_discord
+
+    if should_resend:
+        await send_leaderboard(playlist, guild, client)
+    else:
+        for rank, message in leaderboard_messages.items():
+            await message.edit(content=get_leaderboard_message(rank, playlist))
+
+async def send_leaderboard(playlist: Playlist, guild: discord.Guild, client: discord.Client) -> dict:
+    channel_name = ONES_CHANNEL if playlist == Playlist.ONES else TWOS_CHANNEL if playlist == Playlist.TWOS else THREES_CHANNEL
+    channel = discord.utils.get(guild.channels, name=channel_name)
+    await clear_channel(channel, client)
+
     channel_name = ONES_CHANNEL if playlist == Playlist.ONES else TWOS_CHANNEL if playlist == Playlist.TWOS else THREES_CHANNEL
     channel = discord.utils.get(guild.channels, name=channel_name)
 
     leaderboard_messages = {}
     await channel.send(f'*{playlist.name.capitalize()} Leaderboard*')
     for rank in Rank:
-        leaderboard_messages[rank] = await send_leaderboard_for_rank(rank, playlist, channel)
         if rank.name == MIN_RANK:
-            leaderboard_messages[Rank.U] = await send_leaderboard_for_rank(Rank.U, playlist, channel)
             break
+        try:
+            leaderboard_messages[rank] = await send_leaderboard_for_rank(rank, playlist, channel)
+        except EmptyRankException:
+            continue
 
     return leaderboard_messages
 
 async def send_leaderboard_for_rank(rank: Rank, playlist: Playlist, channel: discord.channel.TextChannel) -> discord.Message:
-    rank_banner = get_rank_banner(rank)
     leaderboard_message = get_leaderboard_message(rank, playlist)
+    rank_banner = get_rank_banner(rank)
 
     await channel.send(file=rank_banner)
     return await channel.send(leaderboard_message)
@@ -42,11 +61,21 @@ def get_leaderboard_message(rank: Rank, playlist: Playlist) -> str:
     players = mock_players
     players_in_rank = [player for player in players if player[playlist]['rank'] == rank]
     if (len(players_in_rank) == 0):
-        return '``` ```'
-    players_in_rank.sort(key=lambda player: player[playlist]['mmr'], reverse=True)
-    result = '```\n'
-    for player in players_in_rank:
-        result += f"{player[playlist]['mmr']} {player['name']}\n"
-    result += '```'
-    return result
+        raise EmptyRankException
+    else:
+        players_in_rank.sort(key=lambda player: player[playlist]['mmr'], reverse=True)
+        result = '```\n'
+        for player in players_in_rank:
+            result += f"{player[playlist]['mmr']} {player['name']}\n"
+        result += '```'
+        return result
     
+def update_non_empty_ranks(playlist: Playlist):
+    players = mock_players
+    for rank in Rank:
+        players_in_rank = [player for player in players if player[playlist]['rank'] == rank]
+        if len(players_in_rank) == 0 and rank in non_empty_ranks:
+            non_empty_ranks.remove(rank)
+        if len(players_in_rank) > 0 and rank not in non_empty_ranks:
+            non_empty_ranks.append(rank)
+

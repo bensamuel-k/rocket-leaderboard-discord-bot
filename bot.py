@@ -16,8 +16,8 @@ async def on_ready():
 
     guild = discord.utils.get(client.guilds, name=GUILD)
 
-    leaderboard_messages = await send_leaderboard(Playlist.THREES, guild)
+    leaderboard_messages = await send_leaderboard(Playlist.THREES, guild, client)
     mock_players[0][Playlist.THREES] = {'mmr': 1820, 'rank': Rank.GC3}
-    await update_leaderboard(leaderboard_messages, Playlist.THREES)
+    await update_leaderboard(leaderboard_messages, Playlist.THREES, guild, client)
 
 client.run(TOKEN)
