@@ -1,4 +1,5 @@
 import os
+import time
 
 import discord
 
@@ -17,7 +18,21 @@ async def on_ready():
     threes_leaderboard = Leaderboard(client, Playlist.THREES)
 
     await threes_leaderboard.send()
+    mock_players[0][Playlist.THREES] = {'mmr': 2000, 'rank': Rank.SSL}
+
+    time.sleep(3)
+    await threes_leaderboard.update()
     mock_players[0][Playlist.THREES] = {'mmr': 1820, 'rank': Rank.GC3}
+
+    time.sleep(3)
+    await threes_leaderboard.update()
+    mock_players[0][Playlist.THREES] = {'mmr': 1811, 'rank': Rank.GC3}
+
+    time.sleep(3)
+    await threes_leaderboard.update()
+    mock_players[1][Playlist.THREES] = {'mmr': 900, 'rank': Rank.D1}
+
+    time.sleep(3)
     await threes_leaderboard.update()
 
 client.run(TOKEN)
