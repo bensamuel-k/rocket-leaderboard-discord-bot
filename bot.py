@@ -4,7 +4,7 @@ import discord
 
 from playlists import Playlist
 from ranks import Rank
-from leaderboard import send_leaderboard, update_leaderboard
+from leaderboard import Leaderboard
 from config import GUILD, TOKEN
 from mock_players import mock_players
 
@@ -14,10 +14,10 @@ client = discord.Client()
 async def on_ready():
     print(f'{client.user} has connected to Discord!')
 
-    guild = discord.utils.get(client.guilds, name=GUILD)
+    threes_leaderboard = Leaderboard(client, Playlist.THREES)
 
-    leaderboard_messages = await send_leaderboard(Playlist.THREES, guild, client)
+    await threes_leaderboard.send()
     mock_players[0][Playlist.THREES] = {'mmr': 1820, 'rank': Rank.GC3}
-    await update_leaderboard(leaderboard_messages, Playlist.THREES, guild, client)
+    await threes_leaderboard.update()
 
 client.run(TOKEN)
