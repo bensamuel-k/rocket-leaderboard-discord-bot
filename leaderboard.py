@@ -4,7 +4,7 @@ import discord
 
 from config import ONES_CHANNEL, TWOS_CHANNEL, THREES_CHANNEL, MIN_RANK, GUILD
 
-from ranks import Rank
+from ranks import Rank, rank_emojis, rank_names
 from playlists import Playlist
 from mock_players import mock_players
 from exceptions import EmptyRankException
@@ -23,8 +23,7 @@ class Leaderboard:
     channel: discord.TextChannel
 
     players: list
-    player_occupied_ranks: list
-    leaderboard_messages: dict
+    leaderboard_message: discord.Message
 
     def __init__(self, client: discord.Client, playlist: Playlist, channel: discord.TextChannel = None):
         self.playlist = playlist
@@ -37,52 +36,46 @@ class Leaderboard:
         else:
             guild = discord.utils.get(client.guilds, name=GUILD)
             self.channel = discord.utils.get(guild.channels, name=channel_names[playlist])
-        self.player_occupied_ranks = []
-        self.leaderboard_messages = {}
+        self.leaderboard_message = None
 
     async def update(self):
-        self.update_player_occupied_ranks()
-        ranks_in_discord = list(self.leaderboard_messages.keys())
-
-        self.player_occupied_ranks.sort(key=lambda rank: rank.value)
-        ranks_in_discord.sort(key=lambda rank: rank.value)
-
-        should_resend = self.player_occupied_ranks != ranks_in_discord
-
-        if should_resend:
-            await self.send()
-        else:
-            for rank, message in self.leaderboard_messages.items():
-                await message.edit(content=self.get_message(rank))
+        if (not self.leaderboard_message):
+            raise Exception('there is no leaderboard_message to update yet. send() needs to be called at least once before update()')
+        message = self.get_leaderboard()
+        await self.leaderboard_message.edit(content=message)
 
     async def send(self, clear_channel=True):
-        self.leaderboard_messages = {}
         if clear_channel:
             await helpers.clear_channel(self.channel, self.client)
-        await self.channel.send(f'*{self.playlist.name.capitalize()} Leaderboard*')
+        message = self.get_leaderboard()
+        self.leaderboard_message = await self.channel.send(message)
+
+    async def send_for_rank(self, rank: Rank):
+        message = f'*{self.playlist.name.capitalize()} Leaderboard*\n{self.get_leaderboard_for_rank(rank)}'
+        await self.channel.send(message)
+
+    def get_leaderboard(self) -> str:
+        message = f'*{self.playlist.name.capitalize()} Leaderboard*\n\n'
         for rank in Rank:
             try:
-                self.leaderboard_messages[rank] = await self.send_for_rank(rank)
+                message += f'{self.get_leaderboard_for_rank(rank)}\n'
             except EmptyRankException:
                 if rank.name != MIN_RANK:
                     continue
             finally:
                 if rank.name == MIN_RANK:
                     break
+        return message[:-1]
 
-    async def send_for_rank(self, rank: Rank) -> discord.Message:
-        message = self.get_message(rank)
-        await self.channel.send(file=helpers.get_rank_banner_file(rank))
-        return await self.channel.send(message)
-
-    def get_message(self, rank: Rank) -> str:
+    def get_leaderboard_for_rank(self, rank: Rank) -> str:
         self.update_players
         players_in_rank = self.get_players_in_rank(rank)
         if (len(players_in_rank) == 0):
             raise EmptyRankException
         else:
             players_in_rank.sort(key=lambda player: player[self.playlist]['mmr'], reverse=True)
-            result = '```\n'
+
+            result = f'{rank_emojis[rank]} {rank_names[rank]}\n```\n'
             for player in players_in_rank:
                 result += f"{player[self.playlist]['mmr']} {player['name']}\n"
             result += '```'
@@ -90,15 +83,6 @@ class Leaderboard:
 
     def update_players(self):
         self.players = mock_players
-
-    def update_player_occupied_ranks(self):
-        self.update_players()
-        for rank in Rank:
-            players_in_rank = self.get_players_in_rank(rank)
-            if len(players_in_rank) == 0 and rank in self.player_occupied_ranks:
-                self.player_occupied_ranks.remove(rank)
-            if len(players_in_rank) > 0 and rank not in self.player_occupied_ranks:
-                self.player_occupied_ranks.append(rank)
 
     def get_players_in_rank(self, rank: Rank) -> list:
         return [player for player in self.players if player[self.playlist]['rank'] == rank]
