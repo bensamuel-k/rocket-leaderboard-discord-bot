@@ -32,7 +32,7 @@ async def leaderboard(client: discord.Client, message: discord.Message, args: li
         else:
             await leaderboard.send(clear_channel=False)
     else:
-        await message.channel.send('Syntax is: **!leaderboard playlist rank**. Specifying a **rank** is optional.\nUse **!playlists** and **!ranks** for possible values.')
+        await message.channel.send('Syntax is: **!leaderboard playlist rank**. Specifying a rank is optional.\nUse **!playlists** and **!ranks** for possible values.')
     
 async def playlists(message):
     await message.channel.send('Currently supported playlists are: **1s**, **2s**, **3s**.')
