@@ -1,13 +1,11 @@
-import os
 import time
 
 import discord
 
 from playlists import Playlist
-from ranks import Rank
 from leaderboard import Leaderboard
 from config import TOKEN
-from mock_players import mock_players, add_random_mock_player, update_random_mock_player_mmr
+from mock_players import add_random_mock_player, update_random_mock_player_mmr
 import commands
 
 client = discord.Client()
@@ -42,7 +40,5 @@ async def on_message(message):
         await commands.playlists(message)
     elif command == 'ranks':
         await commands.ranks(message)
-    else:
-        await message.channel.send(f'The command: **!{command}** does not exist.')
 
 client.run(TOKEN)

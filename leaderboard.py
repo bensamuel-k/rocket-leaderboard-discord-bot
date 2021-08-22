@@ -1,21 +1,12 @@
-import os
-
 import discord
 
-from config import ONES_CHANNEL, TWOS_CHANNEL, THREES_CHANNEL, MIN_RANK, GUILD
+from config import MIN_RANK, GUILD
 
 from ranks import Rank, rank_emojis, rank_names
-from playlists import Playlist
+from playlists import Playlist, channel_names
 from mock_players import mock_players
 from exceptions import EmptyRankException
 import helpers 
-
-channel_names = {
-    Playlist.ONES: ONES_CHANNEL,
-    Playlist.TWOS: TWOS_CHANNEL,
-    Playlist.THREES: THREES_CHANNEL,
-}
-
 
 class Leaderboard:
     playlist: Playlist
@@ -28,7 +19,6 @@ class Leaderboard:
     def __init__(self, client: discord.Client, playlist: Playlist, channel: discord.TextChannel = None):
         self.playlist = playlist
         self.client = client
-
         self.players = mock_players
 
         if channel != None:
@@ -60,11 +50,9 @@ class Leaderboard:
             try:
                 message += f'{self.get_leaderboard_for_rank(rank)}\n'
             except EmptyRankException:
-                if rank.name != MIN_RANK:
-                    continue
-            finally:
-                if rank.name == MIN_RANK:
-                    break
+                pass
+            if rank.name == MIN_RANK:
+                break
         return message[:-1]
 
     def get_leaderboard_for_rank(self, rank: Rank) -> str:
@@ -72,14 +60,12 @@ class Leaderboard:
         players_in_rank = self.get_players_in_rank(rank)
         if (len(players_in_rank) == 0):
             raise EmptyRankException
-        else:
-            players_in_rank.sort(key=lambda player: player[self.playlist]['mmr'], reverse=True)
-
-            result = f'{rank_emojis[rank]} {rank_names[rank]}\n```\n'
-            for player in players_in_rank:
-                result += f"{player[self.playlist]['mmr']} {player['name']}\n"
-            result += '```'
-            return result
+        players_in_rank.sort(key=lambda player: player[self.playlist]['mmr'], reverse=True)
+        result = f'{rank_emojis[rank]} {rank_names[rank]}\n```\n'
+        for player in players_in_rank:
+            result += f"{player[self.playlist]['mmr']} {player['name']}\n"
+        result += '```'
+        return result
 
     def update_players(self):
         self.players = mock_players
