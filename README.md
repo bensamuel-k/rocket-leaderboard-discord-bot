@@ -21,7 +21,7 @@ create new file .env and fill with contents of .env.example
 cat .env.example > .env
 ```
 
-use text editor to change at least the value of DISCORD_TOKEN and GUILD_NAME
+use nano to change at least the value of DISCORD_TOKEN and GUILD_NAME
 ```
 nano .env
 ```
