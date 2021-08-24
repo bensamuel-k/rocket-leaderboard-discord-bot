@@ -9,6 +9,10 @@ the images in **./rl_ranks** need to be uploaded as emojis in your discord guild
 * CHANNEL_NAME_THREES={channel-name-for-threes-leaderboard}
 * MIN_RANK={abbrevation-for-minimal-rank-to-be-shown-on-leaderboard}
 
+you can use the **./.env.example** to permanently set these:
+```
+$ cat .env.example > .env
+```
 rank-abbreviations are the names of the elements in the **Rank** enum inside **./src/ranks.py**
 
 currently this also uses mock player data because psyonix does not give away api keys. maybe i will write a bakkesmod plugin later which could track and send mmr to the leaderboard for each individual player.
