@@ -1,18 +1,37 @@
 # rocket-leaderboard-discord-bot
 
-the images in **./rl_ranks** need to be uploaded as emojis in your discord guild and the following environment variables need to be set:
+currently this uses mock player data because psyonix does not give away api keys. maybe i will write a bakkesmod plugin later which could track and send mmr to the leaderboard for each individual player.
 
-* DISCORD_TOKEN={your-bots-token}
-* GUILD_NAME={name-of-the-guild}
-* CHANNEL_NAME_ONES={channel-name-for-ones-leaderboard}
-* CHANNEL_NAME_TWOS={channel-name-for-twos-leaderboard}
-* CHANNEL_NAME_THREES={channel-name-for-threes-leaderboard}
-* MIN_RANK={abbrevation-for-minimal-rank-to-be-shown-on-leaderboard}
+## setup
 
-you can use the **./.env.example** to permanently set these:
+upload the .png files inside **./rl_ranks** as emojis to your guild
+
+clone repo
 ```
-$ cat .env.example > .env
+git clone git@github.com:bensamuel-k/rocket-leaderboard-discord-bot.git
 ```
-rank-abbreviations are the names of the elements in the **Rank** enum inside **./src/ranks.py**
 
-currently this also uses mock player data because psyonix does not give away api keys. maybe i will write a bakkesmod plugin later which could track and send mmr to the leaderboard for each individual player.
+switch to repo directory
+```
+cd rocket-leaderboard-discord-bot
+```
+
+create new file .env and fill with contents of .env.example
+```
+cat .env.example > .env
+```
+
+use text editor to change at least the value of DISCORD_TOKEN and GUILD_NAME
+```
+nano .env
+```
+
+install dependencys from requirements.txt
+```
+python3 -m pip3 install -r requirements.txt
+```
+
+start bot
+```
+python3 ./src/bot.py
+```
