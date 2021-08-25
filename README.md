@@ -26,6 +26,11 @@ use nano to change at least the value of DISCORD_TOKEN and GUILD_NAME
 nano .env
 ```
 
+setup and activate venv
+```
+python3 -m venv .venv && source .venv/bin/activate
+```
+
 install dependencys from requirements.txt
 ```
 python3 -m pip install -r requirements.txt
